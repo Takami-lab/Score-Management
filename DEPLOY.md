@@ -1,6 +1,13 @@
 # デプロイ手順（GitHub + Vercel + Supabase クラウド）
 
-スマホ・他端末からアクセスできるよう公開する。以後は **`git push` するだけで Vercel が自動再デプロイ**。
+**本番 URL: https://score-management-delta.vercel.app**
+（管理者パスワード: `aWY2Ulajh_Uc` / 初期管理者「管理者」）
+
+- GitHub: https://github.com/Takami-lab/Score-Management （private）
+- Supabase: プロジェクト `oahvjjcbhpjrdmidfogk`（Tokyo リージョン）
+- このアプリはクラウド上で完結。**特定の PC は不要**。コード修正時のみローカルが必要。
+
+スマホ・他端末からアクセスできるよう公開済み。以後は **`git push` するだけで Vercel が自動再デプロイ**。
 
 ```
 [ローカル修正] --git push--> [GitHub(private)] --自動--> [Vercel 本番/プレビュー]
@@ -94,6 +101,14 @@ vercel --prod                                   # 初回本番デプロイ
 `.env.local` / Vercel 環境変数 が切り替わる。
 
 ---
+
+## トラブルシュート
+
+- **本番で「SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY が未設定です」** … Vercel の環境変数が空。
+  `Settings → Environment Variables` で値を入れ直し（貼り付けミスに注意）、`Deployments → ⋯ → Redeploy`。
+- **開くと Vercel のログイン画面** … `Settings → Deployment Protection → Vercel Authentication` の
+  「Require Log In」をオフにして Save。
+- 環境変数を変えたら**必ず再デプロイ**（既存デプロイには自動反映されない）。
 
 ## セキュリティ上の注意
 
