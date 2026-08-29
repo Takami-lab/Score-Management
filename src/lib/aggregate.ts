@@ -51,9 +51,20 @@ export interface TeamApparatusStanding {
   confirmedCount: number;
   countingCount: number;
 }
+export interface TeamMemberCell {
+  apparatusId: number;
+  final: Milli | null;
+  counted: boolean; // その種目の上位 countingCount に入り、チーム得点に採用されたか
+}
+export interface TeamMemberRow {
+  athlete: Athlete;
+  cells: TeamMemberCell[]; // apparatuses と同順
+}
 export interface TeamStanding {
   team: Team;
   perApparatus: TeamApparatusStanding[];
+  members: TeamMemberRow[];
+  apparatuses: Apparatus[];
   total: Milli;
   rank: number | null;
   teamSize: number;
@@ -179,6 +190,9 @@ export function aggregateCategory(
     if (!membersByTeam.has(m.team_id)) membersByTeam.set(m.team_id, []);
     membersByTeam.get(m.team_id)!.push(m.athlete_id);
   }
+  const athleteById = new Map(input.athletes.map((a) => [a.id, a]));
+  const countingCount = rule?.counting_count ?? apparatuses.length;
+
   const teamBase = catTeams.map((team) => {
     const memberIds = membersByTeam.get(team.id) ?? [];
     const apparatusFinals = apparatuses.map((ap) => ({
@@ -197,11 +211,51 @@ export function aggregateCategory(
       apparatus: ap,
       score: ts.perApparatus[i]?.score ?? 0,
       confirmedCount: ts.perApparatus[i]?.confirmedCount ?? 0,
-      countingCount: rule?.counting_count ?? 0,
+      countingCount,
     }));
+
+    // 種目ごとに「採用された(上位 countingCount)」メンバー index の集合
+    const countedByApparatus = apparatuses.map((ap) => {
+      const ranked = memberIds
+        .map((aid, idx) => ({
+          idx,
+          final: rowsByAthlete.get(aid)?.get(ap.id)?.final ?? null,
+        }))
+        .filter((x): x is { idx: number; final: Milli } => x.final !== null)
+        .sort((a, b) => b.final - a.final)
+        .slice(0, countingCount);
+      return new Set(ranked.map((x) => x.idx));
+    });
+
+    const members: TeamMemberRow[] = memberIds.map((aid, mIdx) => ({
+      athlete:
+        athleteById.get(aid) ??
+        ({
+          id: aid,
+          last_name: "?",
+          first_name: "",
+          kana: null,
+          category,
+          affiliation: null,
+          birth_mmdd: null,
+          is_active: true,
+          created_at: "",
+        } as Athlete),
+      cells: apparatuses.map((ap, apIdx) => {
+        const final = rowsByAthlete.get(aid)?.get(ap.id)?.final ?? null;
+        return {
+          apparatusId: ap.id,
+          final,
+          counted: final !== null && countedByApparatus[apIdx].has(mIdx),
+        };
+      }),
+    }));
+
     return {
       team,
       perApparatus,
+      members,
+      apparatuses,
       total: ts.total,
       teamSize: rule?.team_size ?? 0,
       memberCount: memberIds.length,

@@ -118,7 +118,11 @@ export async function listAthleteCompetitions(
   return ((data ?? []) as unknown as { competition: Competition }[])
     .map((r) => r.competition)
     .filter(Boolean)
-    .sort((a, b) => b.held_on.localeCompare(a.held_on));
+    .sort(
+      (a, b) =>
+        b.held_on.localeCompare(a.held_on) ||
+        b.created_at.localeCompare(a.created_at),
+    );
 }
 
 export async function isEntered(

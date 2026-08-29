@@ -128,4 +128,34 @@ describe("aggregateCategory: 団体 (MAG 6-6-5, 確定人数不足)", () => {
     expect(ph.countingCount).toBe(5);
     expect(fromMilli(t.total)).toBe("87.000");
   });
+
+  it("メンバー×種目の内訳: 上位5に入らない得点は counted=false", () => {
+    const r = aggregateCategory("MAG", input);
+    const t = r.teams[0];
+    expect(t.members).toHaveLength(6);
+    // FX: m6 (9.000) が6人中最下位 → 採用外
+    const m6 = t.members.find((m) => m.athlete.id === "m6")!;
+    const m6fx = m6.cells.find((c) => c.apparatusId === 1)!;
+    expect(fromMilli(m6fx.final)).toBe("9.000");
+    expect(m6fx.counted).toBe(false);
+    // FX: m1 (14.000) は採用
+    const m1fx = t.members
+      .find((m) => m.athlete.id === "m1")!
+      .cells.find((c) => c.apparatusId === 1)!;
+    expect(m1fx.counted).toBe(true);
+    // PH: m4 は未入力 → final null, counted false
+    const m4ph = t.members
+      .find((m) => m.athlete.id === "m4")!
+      .cells.find((c) => c.apparatusId === 2)!;
+    expect(m4ph.final).toBeNull();
+    expect(m4ph.counted).toBe(false);
+    // 採用された FX の得点合計 = チーム得点
+    const countedFx = t.members
+      .map((m) => m.cells.find((c) => c.apparatusId === 1)!)
+      .filter((c) => c.counted)
+      .reduce((s, c) => s + (c.final ?? 0), 0);
+    expect(countedFx).toBe(
+      t.perApparatus.find((p) => p.apparatus.id === 1)!.score,
+    );
+  });
 });

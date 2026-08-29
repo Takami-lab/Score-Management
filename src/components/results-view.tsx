@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { fromMilli } from "@/lib/scoring/milli";
 import { Badge, Table, Th, Td, EmptyState } from "@/components/ui";
 import { CATEGORY_LABEL, athleteLabel, type Category } from "@/lib/types";
-import type { CategoryResults, AllAroundRow } from "@/lib/aggregate";
+import type { CategoryResults, AllAroundRow, TeamStanding } from "@/lib/aggregate";
 
 type Tab = "aa" | "apparatus" | "team";
 
@@ -111,49 +111,14 @@ export function ResultsView({
         </div>
       )}
       {tab === "team" && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {cur.teams.length === 0 && <EmptyState>チームが未編成です</EmptyState>}
           {cur.teams.map((t) => (
-            <div key={t.team.id}>
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold text-sm">
-                  {t.rank !== null && `${t.rank}位 　`}
-                  {t.team.name}
-                </h3>
-                <Badge tone={t.memberCount >= t.teamSize ? "neutral" : "warning"}>
-                  {t.memberCount}/{t.teamSize}名 登録
-                </Badge>
-                <span className="text-sm font-semibold tabular ml-auto">
-                  総得点 {fromMilli(t.total)}
-                </span>
-              </div>
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>種目</Th>
-                    <Th className="text-right">チーム得点</Th>
-                    <Th className="text-center">確定状況</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {t.perApparatus.map((pa) => (
-                    <tr key={pa.apparatus.id}>
-                      <Td>{pa.apparatus.name_ja}</Td>
-                      <Td className="text-right">{fromMilli(pa.score)}</Td>
-                      <Td className="text-center">
-                        <Badge
-                          tone={
-                            pa.confirmedCount >= pa.countingCount ? "success" : "warning"
-                          }
-                        >
-                          {pa.confirmedCount}/{pa.countingCount}名確定
-                        </Badge>
-                      </Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+            <TeamStandingTable
+              key={t.team.id}
+              t={t}
+              highlightAthleteId={highlightAthleteId}
+            />
           ))}
         </div>
       )}
@@ -255,5 +220,103 @@ function AllAroundTable({
         })}
       </tbody>
     </Table>
+  );
+}
+
+function TeamStandingTable({
+  t,
+  highlightAthleteId,
+}: {
+  t: TeamStanding;
+  highlightAthleteId?: string;
+}) {
+  const countingCount = t.perApparatus[0]?.countingCount ?? 0;
+  return (
+    <div>
+      {/* ヘッダー: チーム名 / 総得点 / 順位 */}
+      <div className="flex items-stretch mb-0 border border-[var(--color-border)] rounded-t-md overflow-hidden text-sm">
+        <div className="bg-[var(--color-primary)] text-[var(--color-primary-foreground)] font-bold px-4 py-2 flex items-center min-w-[8rem]">
+          {t.team.name}
+        </div>
+        <div className="px-4 py-2 font-semibold tabular flex items-center border-l border-[var(--color-border)]">
+          {fromMilli(t.total)}
+        </div>
+        <div className="px-4 py-2 flex items-center border-l border-[var(--color-border)]">
+          {t.rank !== null ? `${t.rank} 位` : "—"}
+        </div>
+        <div className="ml-auto px-3 py-2 flex items-center text-xs text-[var(--color-muted)]">
+          {t.memberCount}/{t.teamSize}名 ・ 上位{countingCount}名採用
+        </div>
+      </div>
+
+      <Table className="border border-t-0 border-[var(--color-border)] rounded-b-md">
+        <thead>
+          <tr>
+            <Th className="whitespace-nowrap">選手名</Th>
+            <Th className="whitespace-nowrap">所属</Th>
+            <Th className="whitespace-nowrap text-center">学年</Th>
+            {t.apparatuses.map((ap) => (
+              <Th key={ap.id} className="text-right whitespace-nowrap">
+                {ap.name_ja}
+              </Th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {t.members.map((m) => (
+            <tr
+              key={m.athlete.id}
+              className={cn(
+                m.athlete.id === highlightAthleteId && "bg-[var(--color-accent)]",
+              )}
+            >
+              <Td className="whitespace-nowrap">
+                {m.athlete.last_name} {m.athlete.first_name}
+              </Td>
+              <Td className="whitespace-nowrap text-[var(--color-muted)]">
+                {t.team.name}
+              </Td>
+              <Td className="text-center text-[var(--color-muted)]">
+                {m.athlete.affiliation ?? "—"}
+              </Td>
+              {m.cells.map((c) => (
+                <Td
+                  key={c.apparatusId}
+                  className={cn(
+                    "text-right tabular",
+                    c.final !== null && !c.counted && "text-[var(--color-danger)]",
+                  )}
+                >
+                  {c.final === null ? "—" : fromMilli(c.final)}
+                </Td>
+              ))}
+            </tr>
+          ))}
+          <tr className="font-semibold bg-[var(--color-background)]">
+            <Td className="whitespace-nowrap" colSpan={3}>
+              ベスト{countingCount}
+            </Td>
+            {t.perApparatus.map((pa) => (
+              <Td
+                key={pa.apparatus.id}
+                className={cn(
+                  "text-right tabular",
+                  pa.confirmedCount < pa.countingCount &&
+                    pa.confirmedCount > 0 &&
+                    "text-[var(--color-warning)]",
+                )}
+              >
+                {fromMilli(pa.score)}
+              </Td>
+            ))}
+          </tr>
+        </tbody>
+      </Table>
+      <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+        <span className="text-[var(--color-danger)]">赤字</span>
+        は各種目で上位{countingCount}名に入らず、チーム得点に採用されなかった得点。
+        オレンジのベスト{countingCount}は確定人数が {countingCount} 名未満の途中集計。
+      </p>
+    </div>
   );
 }

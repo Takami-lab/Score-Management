@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentAthlete } from "@/lib/auth/athlete";
 import { getCompetition, isEntered } from "@/lib/db/queries";
 import { Badge } from "@/components/ui";
+import { TabNav } from "@/components/tab-nav";
 import { STATUS_LABEL } from "@/lib/types";
 
 export default async function AthleteCompetitionLayout({
@@ -34,20 +35,12 @@ export default async function AthleteCompetitionLayout({
           {comp.venue ? ` ・ ${comp.venue}` : ""}
         </p>
       </div>
-      <nav className="flex gap-1 border-b border-[var(--color-border)]">
-        <Link
-          href={`/athlete/competitions/${id}`}
-          className="min-h-10 px-3 flex items-center text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
-        >
-          D スコア入力
-        </Link>
-        <Link
-          href={`/athlete/competitions/${id}/results`}
-          className="min-h-10 px-3 flex items-center text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
-        >
-          結果・順位
-        </Link>
-      </nav>
+      <TabNav
+        items={[
+          { href: `/athlete/competitions/${id}`, label: "D スコア入力" },
+          { href: `/athlete/competitions/${id}/results`, label: "結果・順位" },
+        ]}
+      />
       {children}
     </div>
   );
