@@ -8,6 +8,10 @@ import { finalScore } from "@/lib/scoring/finalScore";
 import { saveDScores } from "@/lib/actions/scores";
 import type { RoutineViewRow } from "@/lib/types";
 
+function ndDisplay(nd: string): string {
+  return nd && Number(nd) !== 0 ? String(Number(nd)) : "";
+}
+
 export function DInputForm({
   competitionId,
   athleteId,
@@ -26,6 +30,9 @@ export function DInputForm({
   const [dvals, setDvals] = React.useState<Record<number, string>>(
     () => Object.fromEntries(sorted.map((r) => [r.apparatus_id, r.d_score ?? ""])),
   );
+  const [ndvals, setNdvals] = React.useState<Record<number, string>>(
+    () => Object.fromEntries(sorted.map((r) => [r.apparatus_id, ndDisplay(r.nd ?? "")])),
+  );
 
   return (
     <ActionForm action={saveDScores} onSuccess={() => router.refresh()}>
@@ -41,9 +48,9 @@ export function DInputForm({
       <div className="space-y-3">
         {sorted.map((r) => {
           const e = toMilli(r.e_score);
-          const nd = toMilli(r.nd) ?? 0;
           const sb = toMilli(r.sb) ?? 0;
           const d = toMilli(dvals[r.apparatus_id]);
+          const nd = toMilli(ndvals[r.apparatus_id]) ?? 0;
           const f = finalScore({ d, e, nd, sb });
           return (
             <div
@@ -74,16 +81,24 @@ export function DInputForm({
                     className={!editable ? "opacity-60" : ""}
                   />
                 </label>
+                <label className="block">
+                  <span className="text-[var(--color-muted)] text-xs">ND（減点）</span>
+                  <Input
+                    name={`nd_${r.apparatus_id}`}
+                    value={ndvals[r.apparatus_id]}
+                    onChange={(ev) =>
+                      setNdvals((s) => ({ ...s, [r.apparatus_id]: ev.target.value }))
+                    }
+                    inputMode="decimal"
+                    placeholder="0"
+                    readOnly={!editable}
+                    className={!editable ? "opacity-60" : ""}
+                  />
+                </label>
                 <div>
                   <span className="text-[var(--color-muted)] text-xs">E スコア</span>
                   <div className="min-h-11 flex items-center tabular">
                     {r.e_score === null ? "—" : fromMilli(e)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[var(--color-muted)] text-xs">ND</span>
-                  <div className="min-h-11 flex items-center tabular">
-                    {nd ? `-${fromMilli(nd)}` : "—"}
                   </div>
                 </div>
                 <div>
@@ -100,7 +115,7 @@ export function DInputForm({
 
       {editable && (
         <div className="mt-4 sticky bottom-3">
-          <SubmitButton className="w-full shadow-lg">D スコアを保存</SubmitButton>
+          <SubmitButton className="w-full shadow-lg">D・ND を保存</SubmitButton>
         </div>
       )}
     </ActionForm>

@@ -34,7 +34,7 @@ async function resolveActor(): Promise<{ actor: Actor; athleteId: string | null 
   throw new GuardError("ログインが必要です。");
 }
 
-/** 選手 (または管理者代理) の D スコア一括保存。 */
+/** 選手 (または管理者代理) の D スコア + ND 一括保存。 */
 export async function saveDScores(
   _prev: ActionResult,
   formData: FormData,
@@ -48,12 +48,18 @@ export async function saveDScores(
     assertCanEditD(comp, actor, targetAthleteId);
 
     const apparatusIds = formData.getAll("apparatus_id").map(String);
+    const now = new Date().toISOString();
     let saved = 0;
     for (const apId of apparatusIds) {
       const value = parseScore(formData.get(`d_${apId}`), "D スコア");
+      const patch: Record<string, unknown> = { d_score: value, d_updated_at: now };
+      // ND は選手も入力できる (フォームに nd_<id> があるときのみ更新)
+      if (formData.has(`nd_${apId}`)) {
+        patch.nd = parseScore(formData.get(`nd_${apId}`), "ND") ?? "0.000";
+      }
       const { error } = await db()
         .from("routines")
-        .update({ d_score: value, d_updated_at: new Date().toISOString() })
+        .update(patch)
         .eq("competition_id", competitionId)
         .eq("athlete_id", targetAthleteId)
         .eq("apparatus_id", Number(apId));
@@ -62,7 +68,7 @@ export async function saveDScores(
     }
     revalidatePath(`/admin/competitions/${competitionId}`, "layout");
     revalidatePath(`/athlete/competitions/${competitionId}`, "layout");
-    return ok(`D スコアを保存しました (${saved} 種目)`);
+    return ok(`保存しました (${saved} 種目)`);
   } catch (e) {
     if (e instanceof GuardError) return fail(e.message);
     throw e;
