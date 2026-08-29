@@ -175,46 +175,54 @@ function AllAroundTable({
                   {isOpen ? "▲" : "▼"}
                 </Td>
               </tr>
-              {isOpen && (
-                <tr>
-                  <Td colSpan={5} className="bg-[var(--color-background)]">
-                    <Table>
-                      <thead>
-                        <tr>
-                          <Th>種目</Th>
-                          <Th className="text-right">D</Th>
-                          <Th className="text-right">E</Th>
-                          <Th className="text-right">ND</Th>
-                          <Th className="text-right">SB</Th>
-                          <Th className="text-right">最終</Th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {r.cells.map((c) => (
-                          <tr key={c.apparatusId}>
-                            <Td>{c.name}</Td>
-                            <Td className="text-right">{fromMilli(c.d)}</Td>
-                            <Td className="text-right">{fromMilli(c.e)}</Td>
-                            <Td className="text-right">
-                              {c.nd ? `-${fromMilli(c.nd)}` : "—"}
-                            </Td>
-                            <Td className="text-right">
-                              {c.sb ? `+${fromMilli(c.sb)}` : "—"}
-                            </Td>
-                            <Td className="text-right font-medium">
-                              {c.final === null ? (
-                                <span className="text-[var(--color-muted)]">未確定</span>
-                              ) : (
-                                fromMilli(c.final)
-                              )}
-                            </Td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </Td>
-                </tr>
-              )}
+              {isOpen &&
+                (() => {
+                  const showSB = r.athlete.category === "MAG";
+                  return (
+                    <tr>
+                      <Td colSpan={5} className="bg-[var(--color-background)]">
+                        <Table>
+                          <thead>
+                            <tr>
+                              <Th>種目</Th>
+                              <Th className="text-right">D</Th>
+                              <Th className="text-right">E</Th>
+                              <Th className="text-right">ND</Th>
+                              {showSB && <Th className="text-right">SB</Th>}
+                              <Th className="text-right">最終</Th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {r.cells.map((c) => (
+                              <tr key={c.apparatusId}>
+                                <Td>{c.name}</Td>
+                                <Td className="text-right">{fromMilli(c.d, 1)}</Td>
+                                <Td className="text-right">{fromMilli(c.e, 3)}</Td>
+                                <Td className="text-right">
+                                  {c.nd ? `-${fromMilli(c.nd, 1)}` : "—"}
+                                </Td>
+                                {showSB && (
+                                  <Td className="text-right">
+                                    {c.sb ? `+${fromMilli(c.sb, 1)}` : "—"}
+                                  </Td>
+                                )}
+                                <Td className="text-right font-medium">
+                                  {c.final === null ? (
+                                    <span className="text-[var(--color-muted)]">
+                                      未確定
+                                    </span>
+                                  ) : (
+                                    fromMilli(c.final, 3)
+                                  )}
+                                </Td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </Td>
+                    </tr>
+                  );
+                })()}
             </React.Fragment>
           );
         })}

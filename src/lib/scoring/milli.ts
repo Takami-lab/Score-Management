@@ -13,14 +13,24 @@ export function toMilli(value: string | number | null | undefined): Milli | null
   return Math.round(n * 1000);
 }
 
-/** ミリ整数を表示用文字列 "13.400" へ。null は "—"。 */
-export function fromMilli(value: Milli | null | undefined): string {
+/**
+ * ミリ整数を表示用文字列へ。null は "—"。
+ * places で小数桁を指定 (既定 3)。D / ND / SB は 1、E・最終・合計は 3 を使う。
+ */
+export function fromMilli(
+  value: Milli | null | undefined,
+  places = 3,
+): string {
   if (value === null || value === undefined) return "—";
-  const neg = value < 0;
-  const abs = Math.abs(value);
-  const intPart = Math.floor(abs / 1000);
-  const frac = String(abs % 1000).padStart(3, "0");
-  return `${neg ? "-" : ""}${intPart}.${frac}`;
+  return (value / 1000).toFixed(places);
+}
+
+/** 入力欄プレフィル用: 末尾の不要な 0 を落とす ("13.400" -> "13.4")。 */
+export function trimZeros(value: string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return String(n);
 }
 
 /** ミリ整数を number(小数第3位) へ。CSV やデバッグ用途。 */

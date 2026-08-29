@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toMilli, fromMilli, sumMilli } from "./milli";
+import { toMilli, fromMilli, sumMilli, trimZeros } from "./milli";
 import { finalScore, isConfirmed } from "./finalScore";
 import { allAround } from "./allAround";
 import { teamScore } from "./teamScore";
@@ -23,6 +23,19 @@ describe("milli", () => {
   it("0.1 + 0.2 の加算で誤差が出ない", () => {
     expect(sumMilli([toMilli("0.1"), toMilli("0.2")])).toBe(300);
     expect(fromMilli(sumMilli([toMilli("0.1"), toMilli("0.2")]))).toBe("0.300");
+  });
+  it("places 指定で桁数を変えられる (D/ND/SB は 1、E・最終は 3)", () => {
+    expect(fromMilli(13400, 1)).toBe("13.4");
+    expect(fromMilli(100, 1)).toBe("0.1");
+    expect(fromMilli(13950, 3)).toBe("13.950");
+    expect(fromMilli(null, 1)).toBe("—");
+  });
+  it("trimZeros: 入力欄プレフィル用に末尾0を落とす", () => {
+    expect(trimZeros("13.400")).toBe("13.4");
+    expect(trimZeros("0.300")).toBe("0.3");
+    expect(trimZeros("")).toBe("");
+    expect(trimZeros(null)).toBe("");
+    expect(trimZeros("14.000")).toBe("14");
   });
 });
 

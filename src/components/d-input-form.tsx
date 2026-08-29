@@ -3,14 +3,10 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Input, Badge } from "@/components/ui";
-import { toMilli, fromMilli } from "@/lib/scoring/milli";
+import { toMilli, fromMilli, trimZeros } from "@/lib/scoring/milli";
 import { finalScore } from "@/lib/scoring/finalScore";
 import { saveDScores } from "@/lib/actions/scores";
 import type { RoutineViewRow } from "@/lib/types";
-
-function ndDisplay(nd: string): string {
-  return nd && Number(nd) !== 0 ? String(Number(nd)) : "";
-}
 
 export function DInputForm({
   competitionId,
@@ -27,11 +23,16 @@ export function DInputForm({
   const sorted = [...routineRows].sort(
     (a, b) => a.apparatus_sort_order - b.apparatus_sort_order,
   );
-  const [dvals, setDvals] = React.useState<Record<number, string>>(
-    () => Object.fromEntries(sorted.map((r) => [r.apparatus_id, r.d_score ?? ""])),
+  const [dvals, setDvals] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(sorted.map((r) => [r.apparatus_id, trimZeros(r.d_score)])),
   );
-  const [ndvals, setNdvals] = React.useState<Record<number, string>>(
-    () => Object.fromEntries(sorted.map((r) => [r.apparatus_id, ndDisplay(r.nd ?? "")])),
+  const [ndvals, setNdvals] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(
+      sorted.map((r) => [
+        r.apparatus_id,
+        trimZeros(r.nd && Number(r.nd) !== 0 ? r.nd : ""),
+      ]),
+    ),
   );
 
   return (
@@ -47,6 +48,7 @@ export function DInputForm({
 
       <div className="space-y-3">
         {sorted.map((r) => {
+          const hasSB = r.category === "MAG";
           const e = toMilli(r.e_score);
           const sb = toMilli(r.sb) ?? 0;
           const d = toMilli(dvals[r.apparatus_id]);
@@ -63,12 +65,19 @@ export function DInputForm({
                 {r.e_score === null ? (
                   <Badge tone="warning">採点待ち</Badge>
                 ) : (
-                  <Badge tone="success">最終 {fromMilli(f)}</Badge>
+                  <Badge tone="success">最終 {fromMilli(f, 3)}</Badge>
                 )}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div
+                className={
+                  "grid gap-3 text-sm " +
+                  (hasSB ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")
+                }
+              >
                 <label className="block">
-                  <span className="text-[var(--color-muted)] text-xs">D スコア</span>
+                  <span className="text-[var(--color-muted)] text-xs">
+                    D スコア（小数第1位）
+                  </span>
                   <Input
                     name={`d_${r.apparatus_id}`}
                     value={dvals[r.apparatus_id]}
@@ -76,13 +85,15 @@ export function DInputForm({
                       setDvals((s) => ({ ...s, [r.apparatus_id]: ev.target.value }))
                     }
                     inputMode="decimal"
-                    placeholder="5.600"
+                    placeholder="5.6"
                     readOnly={!editable}
                     className={!editable ? "opacity-60" : ""}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-[var(--color-muted)] text-xs">ND（減点）</span>
+                  <span className="text-[var(--color-muted)] text-xs">
+                    ND（減点・小数第1位）
+                  </span>
                   <Input
                     name={`nd_${r.apparatus_id}`}
                     value={ndvals[r.apparatus_id]}
@@ -98,15 +109,17 @@ export function DInputForm({
                 <div>
                   <span className="text-[var(--color-muted)] text-xs">E スコア</span>
                   <div className="min-h-11 flex items-center tabular">
-                    {r.e_score === null ? "—" : fromMilli(e)}
+                    {r.e_score === null ? "—" : fromMilli(e, 3)}
                   </div>
                 </div>
-                <div>
-                  <span className="text-[var(--color-muted)] text-xs">SB</span>
-                  <div className="min-h-11 flex items-center tabular">
-                    {sb ? `+${fromMilli(sb)}` : "—"}
+                {hasSB && (
+                  <div>
+                    <span className="text-[var(--color-muted)] text-xs">SB</span>
+                    <div className="min-h-11 flex items-center tabular">
+                      {sb ? `+${fromMilli(sb, 1)}` : "—"}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           );

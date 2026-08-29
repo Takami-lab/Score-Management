@@ -3,7 +3,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Input } from "@/components/ui";
-import { toMilli, fromMilli } from "@/lib/scoring/milli";
+import { toMilli, fromMilli, trimZeros } from "@/lib/scoring/milli";
 import { finalScore } from "@/lib/scoring/finalScore";
 import { saveRoutineScores } from "@/lib/actions/scores";
 import type { RoutineViewRow } from "@/lib/types";
@@ -11,6 +11,7 @@ import type { RoutineViewRow } from "@/lib/types";
 interface Row {
   apparatusId: number;
   name: string;
+  hasSB: boolean; // 男子のみ SB あり
   d: string;
   e: string;
   nd: string;
@@ -23,9 +24,10 @@ function initRows(rows: RoutineViewRow[]): Row[] {
     .map((r) => ({
       apparatusId: r.apparatus_id,
       name: r.apparatus_name,
-      d: r.d_score ?? "",
-      e: r.e_score ?? "",
-      nd: r.nd && Number(r.nd) !== 0 ? String(Number(r.nd)) : "",
+      hasSB: r.category === "MAG",
+      d: trimZeros(r.d_score), // D は小数第1位
+      e: r.e_score ?? "", // E は小数第3位までそのまま
+      nd: trimZeros(r.nd && Number(r.nd) !== 0 ? r.nd : ""),
       sb: Number(r.sb) === 0.1,
     }));
 }
@@ -90,25 +92,29 @@ export function RoutineScoreForm({
                   {f === null ? (
                     <span className="text-[var(--color-muted)]">未確定</span>
                   ) : (
-                    <span className="font-semibold">{fromMilli(f)}</span>
+                    <span className="font-semibold">{fromMilli(f, 3)}</span>
                   )}
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <label className="block">
-                  <span className="text-xs text-[var(--color-muted)]">D スコア</span>
+                  <span className="text-xs text-[var(--color-muted)]">
+                    D スコア（小数第1位）
+                  </span>
                   <Input
                     name={`d_${r.apparatusId}`}
                     value={r.d}
                     onChange={(e) => set(i, { d: e.target.value })}
                     inputMode="decimal"
-                    placeholder="5.600"
+                    placeholder="5.6"
                     readOnly={!editableD}
                     className={!editableD ? "opacity-60" : ""}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-[var(--color-muted)]">E スコア</span>
+                  <span className="text-xs text-[var(--color-muted)]">
+                    E スコア（小数第3位）
+                  </span>
                   <Input
                     name={`e_${r.apparatusId}`}
                     value={r.e}
@@ -118,7 +124,9 @@ export function RoutineScoreForm({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-[var(--color-muted)]">ND</span>
+                  <span className="text-xs text-[var(--color-muted)]">
+                    ND（小数第1位）
+                  </span>
                   <Input
                     name={`nd_${r.apparatusId}`}
                     value={r.nd}
@@ -127,16 +135,19 @@ export function RoutineScoreForm({
                     placeholder="0"
                   />
                 </label>
-                <label className="flex items-center gap-2 pt-4">
-                  <input
-                    type="checkbox"
-                    name={`sb_${r.apparatusId}`}
-                    checked={r.sb}
-                    onChange={(e) => set(i, { sb: e.target.checked })}
-                    className="size-5"
-                  />
-                  <span className="text-sm">SB (+0.1)</span>
-                </label>
+                {r.hasSB && (
+                  <label className="flex items-center gap-2 pt-4">
+                    <input type="hidden" name={`sb_marker_${r.apparatusId}`} value="1" />
+                    <input
+                      type="checkbox"
+                      name={`sb_${r.apparatusId}`}
+                      checked={r.sb}
+                      onChange={(e) => set(i, { sb: e.target.checked })}
+                      className="size-5"
+                    />
+                    <span className="text-sm">SB (+0.1)</span>
+                  </label>
+                )}
               </div>
             </div>
           );
