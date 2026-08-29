@@ -20,6 +20,9 @@ export const STATUS_ORDER: CompetitionStatus[] = [
   "finalized",
 ];
 
+/** 選手の所属・学年の選択肢 */
+export const GRADE_OPTIONS = ["1年", "2年", "3年", "4年", "OB", "OG"] as const;
+
 export interface Athlete {
   id: string;
   last_name: string;

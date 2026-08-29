@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Input, Table, Th, Td } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { toMilli, fromMilli } from "@/lib/scoring/milli";
 import { finalScore } from "@/lib/scoring/finalScore";
 import { saveRoutineScores } from "@/lib/actions/scores";
@@ -74,27 +74,29 @@ export function RoutineScoreForm({
       <input type="hidden" name="competition_id" value={competitionId} />
       <input type="hidden" name="athlete_id" value={athleteId} />
       <h2 className="text-base font-semibold mb-3">{athleteName} の採点</h2>
-      <Table>
-        <thead>
-          <tr>
-            <Th>種目</Th>
-            <Th className="w-24">D</Th>
-            <Th className="w-24">E</Th>
-            <Th className="w-24">ND</Th>
-            <Th className="w-16 text-center">SB</Th>
-            <Th className="w-24 text-right">最終</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const f = preview(r);
-            return (
-              <tr key={r.apparatusId}>
-                <Td>
-                  <input type="hidden" name="apparatus_id" value={r.apparatusId} />
-                  {r.name}
-                </Td>
-                <Td>
+      <div className="space-y-3">
+        {rows.map((r, i) => {
+          const f = preview(r);
+          return (
+            <div
+              key={r.apparatusId}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+            >
+              <input type="hidden" name="apparatus_id" value={r.apparatusId} />
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">{r.name}</span>
+                <span className="text-sm tabular">
+                  最終{" "}
+                  {f === null ? (
+                    <span className="text-[var(--color-muted)]">未確定</span>
+                  ) : (
+                    <span className="font-semibold">{fromMilli(f)}</span>
+                  )}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <label className="block">
+                  <span className="text-xs text-[var(--color-muted)]">D スコア</span>
                   <Input
                     name={`d_${r.apparatusId}`}
                     value={r.d}
@@ -104,8 +106,9 @@ export function RoutineScoreForm({
                     readOnly={!editableD}
                     className={!editableD ? "opacity-60" : ""}
                   />
-                </Td>
-                <Td>
+                </label>
+                <label className="block">
+                  <span className="text-xs text-[var(--color-muted)]">E スコア</span>
                   <Input
                     name={`e_${r.apparatusId}`}
                     value={r.e}
@@ -113,8 +116,9 @@ export function RoutineScoreForm({
                     inputMode="decimal"
                     placeholder="8.400"
                   />
-                </Td>
-                <Td>
+                </label>
+                <label className="block">
+                  <span className="text-xs text-[var(--color-muted)]">ND</span>
                   <Input
                     name={`nd_${r.apparatusId}`}
                     value={r.nd}
@@ -122,8 +126,8 @@ export function RoutineScoreForm({
                     inputMode="decimal"
                     placeholder="0"
                   />
-                </Td>
-                <Td className="text-center">
+                </label>
+                <label className="flex items-center gap-2 pt-4">
                   <input
                     type="checkbox"
                     name={`sb_${r.apparatusId}`}
@@ -131,19 +135,13 @@ export function RoutineScoreForm({
                     onChange={(e) => set(i, { sb: e.target.checked })}
                     className="size-5"
                   />
-                </Td>
-                <Td className="text-right font-medium tabular">
-                  {f === null ? (
-                    <span className="text-[var(--color-muted)]">未確定</span>
-                  ) : (
-                    fromMilli(f)
-                  )}
-                </Td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+                  <span className="text-sm">SB (+0.1)</span>
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {!editableD && (
         <p className="mt-2 text-xs text-[var(--color-muted)]">

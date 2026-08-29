@@ -2,7 +2,7 @@
 import * as React from "react";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Button, Input, Select, Label, Table, Th, Td, Badge } from "@/components/ui";
-import { CATEGORY_LABEL, type Athlete } from "@/lib/types";
+import { CATEGORY_LABEL, GRADE_OPTIONS, type Athlete } from "@/lib/types";
 import { createAthlete, updateAthlete, setAthleteActive } from "@/lib/actions/roster";
 
 function Fields({ a }: { a?: Athlete }) {
@@ -32,7 +32,17 @@ function Fields({ a }: { a?: Athlete }) {
       </div>
       <div>
         <Label>所属・学年</Label>
-        <Input name="affiliation" defaultValue={a?.affiliation ?? ""} placeholder="3年" />
+        <Select name="affiliation" defaultValue={a?.affiliation ?? ""}>
+          <option value="">（未設定）</option>
+          {GRADE_OPTIONS.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+          {a?.affiliation && !GRADE_OPTIONS.includes(a.affiliation as (typeof GRADE_OPTIONS)[number]) && (
+            <option value={a.affiliation}>{a.affiliation}</option>
+          )}
+        </Select>
       </div>
       <div>
         <Label>誕生日 (MMDD・任意)</Label>

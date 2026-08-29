@@ -3,7 +3,7 @@
 
 insert into apparatuses (code, name_ja, category, sort_order) values
   -- 男子 (MAG)
-  ('FX', '床',      'MAG', 1),
+  ('FX', 'ゆか',    'MAG', 1),
   ('PH', 'あん馬',  'MAG', 2),
   ('SR', 'つり輪',  'MAG', 3),
   ('VT', '跳馬',    'MAG', 4),
@@ -13,7 +13,7 @@ insert into apparatuses (code, name_ja, category, sort_order) values
   ('VT', '跳馬',          'WAG', 1),
   ('UB', '段違い平行棒',  'WAG', 2),
   ('BB', '平均台',        'WAG', 3),
-  ('FX', '床',            'WAG', 4)
+  ('FX', 'ゆか',          'WAG', 4)
 on conflict (code, category) do nothing;
 
 insert into team_rules (category, team_size, counting_count) values

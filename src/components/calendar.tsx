@@ -49,7 +49,8 @@ export function Calendar({ competitions }: { competitions: Competition[] }) {
           翌月 →
         </button>
       </div>
-      <div className="grid grid-cols-7 border-l border-t border-[var(--color-border)]">
+      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="grid grid-cols-7 border-l border-t border-[var(--color-border)] min-w-[42rem] sm:min-w-0">
         {WD.map((w, i) => (
           <div
             key={w}
@@ -93,6 +94,32 @@ export function Calendar({ competitions }: { competitions: Competition[] }) {
           );
         })}
       </div>
+      </div>
+
+      <ul className="mt-3 space-y-1 sm:hidden">
+        {competitions
+          .filter((c) => {
+            const [y, m] = c.held_on.split("-").map(Number);
+            return y === year && m === month0 + 1;
+          })
+          .sort((a, b) => a.held_on.localeCompare(b.held_on))
+          .map((c) => (
+            <li key={c.id}>
+              <Link
+                href={`/admin/competitions/${c.id}`}
+                className="flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2.5 text-sm hover:bg-[var(--color-accent)]"
+              >
+                <span className="text-[var(--color-muted)] tabular">
+                  {c.held_on.slice(5).replace("-", "/")}
+                </span>
+                <span className="font-medium flex-1 truncate">{c.name}</span>
+                <span className="text-xs text-[var(--color-muted)]">
+                  {STATUS_LABEL[c.status]}
+                </span>
+              </Link>
+            </li>
+          ))}
+      </ul>
     </div>
   );
 }
