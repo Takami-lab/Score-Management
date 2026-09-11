@@ -109,7 +109,9 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        "rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]",
+        // min-w-0: grid/flex の子になったとき、中身の実寸まで広がって
+        // 画面外へはみ出すのを防ぐ (内側の overflow-x-auto を効かせるため)
+        "min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]",
         className,
       )}
       {...props}
@@ -162,7 +164,7 @@ export function Table({
   ...props
 }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full min-w-0 overflow-x-auto">
       <table
         className={cn("w-full text-sm border-collapse tabular", className)}
         {...props}

@@ -37,7 +37,7 @@ export function Calendar({ competitions }: { competitions: Competition[] }) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex items-center justify-between mb-3">
         <button onClick={() => shift(-1)} className="min-h-9 px-3 rounded-md hover:bg-[var(--color-accent)]">
           ← 前月
@@ -49,7 +49,7 @@ export function Calendar({ competitions }: { competitions: Competition[] }) {
           翌月 →
         </button>
       </div>
-      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="w-full min-w-0 overflow-x-auto">
       <div className="grid grid-cols-7 border-l border-t border-[var(--color-border)] min-w-[42rem] sm:min-w-0">
         {WD.map((w, i) => (
           <div
