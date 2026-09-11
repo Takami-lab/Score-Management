@@ -139,3 +139,60 @@ export async function saveRoutineScores(
     throw e;
   }
 }
+
+/**
+ * 管理者による「1 種目 × 全選手」の一括保存 (種目ごと入力モード)。
+ * フィールド名は選手 ID をキーにする: d_<athleteId> / e_<athleteId> / nd_<athleteId> / sb_<athleteId>
+ */
+export async function saveApparatusScores(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const competitionId = String(formData.get("competition_id") ?? "");
+    const apparatusId = Number(formData.get("apparatus_id") ?? 0);
+    const comp = await getCompetition(competitionId);
+    if (!comp) return fail("試技会が見つかりません。");
+    if (!apparatusId) return fail("種目が不明です。");
+    const { actor } = await resolveActor();
+    assertCanEditE(comp, actor);
+
+    const athleteIds = formData.getAll("athlete_id").map(String);
+    const now = new Date().toISOString();
+    let saved = 0;
+    for (const athleteId of athleteIds) {
+      const e_score = parseScore(formData.get(`e_${athleteId}`), "E スコア", 3);
+      const nd = parseScore(formData.get(`nd_${athleteId}`), "ND", 1) ?? "0.000";
+      const patch: Record<string, unknown> = {
+        e_score,
+        nd,
+        e_updated_at: now,
+      };
+      // SB は男子のみ (男子行だけ sb_marker_<athleteId> を送る)
+      if (formData.has(`sb_marker_${athleteId}`)) {
+        patch.sb =
+          String(formData.get(`sb_${athleteId}`)) === "on" ? "0.100" : "0.000";
+      }
+      // D 上書き (任意)
+      const dRaw = formData.get(`d_${athleteId}`);
+      if (dRaw !== null) {
+        patch.d_score = parseScore(dRaw, "D スコア", 1);
+        patch.d_updated_at = now;
+      }
+      const { error } = await db()
+        .from("routines")
+        .update(patch)
+        .eq("competition_id", competitionId)
+        .eq("athlete_id", athleteId)
+        .eq("apparatus_id", apparatusId);
+      if (error) return fail("保存に失敗しました: " + error.message);
+      saved += 1;
+    }
+    revalidatePath(`/admin/competitions/${competitionId}`, "layout");
+    revalidatePath(`/athlete/competitions/${competitionId}`, "layout");
+    return ok(`採点を保存しました (${saved} 名)`);
+  } catch (e) {
+    if (e instanceof GuardError) return fail(e.message);
+    throw e;
+  }
+}

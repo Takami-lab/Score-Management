@@ -63,6 +63,29 @@ export async function listApparatuses(): Promise<Apparatus[]> {
   return (data ?? []) as Apparatus[];
 }
 
+export async function getApparatus(id: number): Promise<Apparatus | null> {
+  const { data, error } = await db()
+    .from("apparatuses")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data as Apparatus | null;
+}
+
+export async function listApparatusRoutineRows(
+  competitionId: string,
+  apparatusId: number,
+): Promise<RoutineViewRow[]> {
+  const { data, error } = await db()
+    .from("v_routines")
+    .select("*")
+    .eq("competition_id", competitionId)
+    .eq("apparatus_id", apparatusId);
+  if (error) throw error;
+  return (data ?? []) as RoutineViewRow[];
+}
+
 export async function listActiveAthletes(): Promise<Athlete[]> {
   const { data, error } = await db()
     .from("athletes")
