@@ -74,7 +74,7 @@ async function AthleteTab({ athleteId }: { athleteId?: string }) {
           label: athleteLabel(a) + (a.is_active ? "" : "（無効）"),
           group: CATEGORY_LABEL[a.category],
         }))}
-        buildHref={(v) => `/admin/progress?tab=athlete&athlete=${v}`}
+        hrefPrefix="/admin/progress?tab=athlete&athlete="
       />
       {selected ? (
         <Card>
@@ -115,7 +115,7 @@ async function TeamTab({ teamId }: { teamId?: string }) {
           label: p.name,
           group: CATEGORY_LABEL[p.category],
         }))}
-        buildHref={(v) => `/admin/progress?tab=team&team=${v}`}
+        hrefPrefix="/admin/progress?tab=team&team="
       />
       {selected ? (
         <Card>
