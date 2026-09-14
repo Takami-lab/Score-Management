@@ -30,6 +30,9 @@ export default async function AdminLayout({
             <Link href="/admin/athletes" className="min-h-9 flex items-center whitespace-nowrap text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)]">
               選手名簿
             </Link>
+            <Link href="/admin/progress" className="min-h-9 flex items-center whitespace-nowrap text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)]">
+              得点推移
+            </Link>
             <Link href="/admin/admins" className="min-h-9 flex items-center whitespace-nowrap text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)]">
               管理者
             </Link>

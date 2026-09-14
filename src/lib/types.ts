@@ -57,6 +57,16 @@ export interface Team {
   competition_id: string;
   name: string;
   category: Category;
+  team_profile_id: string | null;
+}
+
+/** 試技会をまたいで同一チームを識別するための台帳 */
+export interface TeamProfile {
+  id: string;
+  name: string;
+  category: Category;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface TeamRuleRow {

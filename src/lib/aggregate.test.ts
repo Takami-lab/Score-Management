@@ -96,7 +96,13 @@ describe("aggregateCategory: 個人総合 + 順位", () => {
 describe("aggregateCategory: 団体 (MAG 6-6-5, 確定人数不足)", () => {
   const ids = ["m1", "m2", "m3", "m4", "m5", "m6"];
   const athletes = ids.map((id, i) => athlete(id, `選手${i}`));
-  const team: Team = { id: "t1", competition_id: "c1", name: "A校", category: "MAG" };
+  const team: Team = {
+    id: "t1",
+    competition_id: "c1",
+    name: "A校",
+    category: "MAG",
+    team_profile_id: null,
+  };
 
   // FX(id=1): 6名確定 14,13,12,11,10,9 -> 上位5 = 60.000
   // PH(id=2): 3名のみ確定 10,9,8 -> 27.000 (3/5名)

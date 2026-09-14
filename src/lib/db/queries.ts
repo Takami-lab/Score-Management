@@ -7,6 +7,7 @@ import type {
   Competition,
   RoutineViewRow,
   Team,
+  TeamProfile,
   TeamRuleRow,
 } from "@/lib/types";
 
@@ -61,6 +62,26 @@ export async function listApparatuses(): Promise<Apparatus[]> {
     .order("sort_order");
   if (error) throw error;
   return (data ?? []) as Apparatus[];
+}
+
+export async function listTeamProfiles(): Promise<TeamProfile[]> {
+  const { data, error } = await db()
+    .from("team_profiles")
+    .select("*")
+    .order("category")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as TeamProfile[];
+}
+
+export async function getTeamProfile(id: string): Promise<TeamProfile | null> {
+  const { data, error } = await db()
+    .from("team_profiles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data as TeamProfile | null;
 }
 
 export async function getApparatus(id: number): Promise<Apparatus | null> {
