@@ -1,17 +1,26 @@
 import type { Competition } from "@/lib/types";
+import {
+  ADMIN_SCORING_STATUSES,
+  ATHLETE_D_STATUSES,
+  ATHLETE_E_STATUSES,
+  STATUS_LABEL,
+} from "@/lib/types";
 
 export type Actor = { kind: "admin" } | { kind: "athlete"; athleteId: string };
 
 export class GuardError extends Error {}
 
-/** 選手 D スコアの編集可否。選手は open の間・自分の行のみ。管理者は常に可 (代理・上書き)。 */
+/**
+ * 選手 D / ND スコアの編集可否。
+ * 選手は open・open_de の間、自分の行のみ。管理者は常に可 (代理・上書き)。
+ */
 export function assertCanEditD(
   competition: Competition,
   actor: Actor,
   targetAthleteId: string,
 ): void {
   if (actor.kind === "admin") return;
-  if (competition.status !== "open") {
+  if (!ATHLETE_D_STATUSES.includes(competition.status)) {
     throw new GuardError("この試技会は D スコアの入力を受け付けていません。");
   }
   if (actor.athleteId !== targetAthleteId) {
@@ -19,13 +28,33 @@ export function assertCanEditD(
   }
 }
 
-/** E / ND / SB の編集可否。管理者のみ、open または locked の間。 */
-export function assertCanEditE(competition: Competition, actor: Actor): void {
-  if (actor.kind !== "admin") throw new GuardError("権限がありません。");
-  if (competition.status === "draft" || competition.status === "finalized") {
-    throw new GuardError(
-      `現在のステータス (${competition.status}) では採点入力できません。`,
-    );
+/** 選手が自分の E / SB まで入力できるか (ステータス open_de のときのみ)。 */
+export function athleteCanEditE(competition: Competition): boolean {
+  return ATHLETE_E_STATUSES.includes(competition.status);
+}
+
+/**
+ * E / SB の編集可否。
+ * 管理者は採点可能ステータスの間。選手は open_de の間、自分の行のみ。
+ */
+export function assertCanEditE(
+  competition: Competition,
+  actor: Actor,
+  targetAthleteId?: string,
+): void {
+  if (actor.kind === "admin") {
+    if (!ADMIN_SCORING_STATUSES.includes(competition.status)) {
+      throw new GuardError(
+        `現在のステータス「${STATUS_LABEL[competition.status]}」では採点入力できません。`,
+      );
+    }
+    return;
+  }
+  if (!athleteCanEditE(competition)) {
+    throw new GuardError("この試技会は E スコアの入力を受け付けていません。");
+  }
+  if (targetAthleteId && actor.athleteId !== targetAthleteId) {
+    throw new GuardError("他の選手のスコアは編集できません。");
   }
 }
 

@@ -6,9 +6,10 @@ import { STATUS_LABEL, STATUS_ORDER, type CompetitionStatus } from "@/lib/types"
 
 const HINT: Record<CompetitionStatus, string> = {
   draft: "設定中。選手には非表示。",
-  open: "選手が D スコアを入力可能。採点入力も並行可。",
+  open: "選手が D・ND を入力可能。採点入力も並行可。",
   locked: "D 入力締切。採点入力のみ。",
   finalized: "確定。結果は「暫定」表示が外れる。",
+  open_de: "選手が D・ND に加え E・SB も自分で入力可能（自己採点）。",
 };
 
 export function StatusEditor({

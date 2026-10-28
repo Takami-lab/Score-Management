@@ -13,11 +13,14 @@ export function DInputForm({
   athleteId,
   routineRows,
   editable,
+  editableE = false,
 }: {
   competitionId: string;
   athleteId: string;
   routineRows: RoutineViewRow[];
   editable: boolean;
+  /** ステータス open_de のとき true: 選手が E / SB も入力できる */
+  editableE?: boolean;
 }) {
   const router = useRouter();
   const sorted = [...routineRows].sort(
@@ -34,6 +37,12 @@ export function DInputForm({
       ]),
     ),
   );
+  const [evals, setEvals] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(sorted.map((r) => [r.apparatus_id, r.e_score ?? ""])),
+  );
+  const [sbvals, setSbvals] = React.useState<Record<number, boolean>>(() =>
+    Object.fromEntries(sorted.map((r) => [r.apparatus_id, Number(r.sb) === 0.1])),
+  );
 
   return (
     <ActionForm action={saveDScores} onSuccess={() => router.refresh()}>
@@ -42,17 +51,22 @@ export function DInputForm({
 
       {!editable && (
         <p className="mb-3 text-sm rounded-md bg-[var(--color-accent)] px-3 py-2">
-          この試技会は D スコアの入力を締め切りました。以下は参照のみです。
+          この試技会はスコアの入力を締め切りました。以下は参照のみです。
         </p>
       )}
 
       <div className="space-y-3">
         {sorted.map((r) => {
           const hasSB = r.category === "MAG";
-          const e = toMilli(r.e_score);
-          const sb = toMilli(r.sb) ?? 0;
           const d = toMilli(dvals[r.apparatus_id]);
           const nd = toMilli(ndvals[r.apparatus_id]) ?? 0;
+          // E / SB は自分で入力できるときは入力値、そうでなければ保存済みの値
+          const e = editableE ? toMilli(evals[r.apparatus_id]) : toMilli(r.e_score);
+          const sb = editableE
+            ? sbvals[r.apparatus_id]
+              ? 100
+              : 0
+            : (toMilli(r.sb) ?? 0);
           const f = finalScore({ d, e, nd, sb });
           return (
             <div
@@ -62,8 +76,8 @@ export function DInputForm({
               <input type="hidden" name="apparatus_id" value={r.apparatus_id} />
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">{r.apparatus_name}</span>
-                {r.e_score === null ? (
-                  <Badge tone="warning">採点待ち</Badge>
+                {f === null ? (
+                  <Badge tone="warning">{editableE ? "未確定" : "採点待ち"}</Badge>
                 ) : (
                   <Badge tone="success">最終 {fromMilli(f, 3)}</Badge>
                 )}
@@ -106,20 +120,62 @@ export function DInputForm({
                     className={!editable ? "opacity-60" : ""}
                   />
                 </label>
-                <div>
-                  <span className="text-[var(--color-muted)] text-xs">E スコア</span>
-                  <div className="min-h-11 flex items-center tabular">
-                    {r.e_score === null ? "—" : fromMilli(e, 3)}
-                  </div>
-                </div>
-                {hasSB && (
+                {editableE ? (
+                  <label className="block">
+                    <span className="text-[var(--color-muted)] text-xs">
+                      E スコア（小数第3位）
+                    </span>
+                    <Input
+                      name={`e_${r.apparatus_id}`}
+                      value={evals[r.apparatus_id]}
+                      onChange={(ev) =>
+                        setEvals((s) => ({ ...s, [r.apparatus_id]: ev.target.value }))
+                      }
+                      inputMode="decimal"
+                      placeholder="8.400"
+                      readOnly={!editable}
+                      className={!editable ? "opacity-60" : ""}
+                    />
+                  </label>
+                ) : (
                   <div>
-                    <span className="text-[var(--color-muted)] text-xs">SB</span>
+                    <span className="text-[var(--color-muted)] text-xs">E スコア</span>
                     <div className="min-h-11 flex items-center tabular">
-                      {sb ? `+${fromMilli(sb, 1)}` : "—"}
+                      {r.e_score === null ? "—" : fromMilli(e, 3)}
                     </div>
                   </div>
                 )}
+                {hasSB &&
+                  (editableE ? (
+                    <label className="flex items-center gap-2 pt-4">
+                      <input
+                        type="hidden"
+                        name={`sb_marker_${r.apparatus_id}`}
+                        value="1"
+                      />
+                      <input
+                        type="checkbox"
+                        name={`sb_${r.apparatus_id}`}
+                        checked={sbvals[r.apparatus_id]}
+                        onChange={(ev) =>
+                          setSbvals((s) => ({
+                            ...s,
+                            [r.apparatus_id]: ev.target.checked,
+                          }))
+                        }
+                        disabled={!editable}
+                        className="size-5"
+                      />
+                      <span className="text-sm">SB (+0.1)</span>
+                    </label>
+                  ) : (
+                    <div>
+                      <span className="text-[var(--color-muted)] text-xs">SB</span>
+                      <div className="min-h-11 flex items-center tabular">
+                        {sb ? `+${fromMilli(sb, 1)}` : "—"}
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           );
@@ -128,7 +184,9 @@ export function DInputForm({
 
       {editable && (
         <div className="mt-4 sticky bottom-3">
-          <SubmitButton className="w-full shadow-lg">D・ND を保存</SubmitButton>
+          <SubmitButton className="w-full shadow-lg">
+            {editableE ? "スコアを保存" : "D・ND を保存"}
+          </SubmitButton>
         </div>
       )}
     </ActionForm>

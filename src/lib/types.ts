@@ -1,5 +1,10 @@
 export type Category = "MAG" | "WAG";
-export type CompetitionStatus = "draft" | "open" | "locked" | "finalized";
+export type CompetitionStatus =
+  | "draft"
+  | "open"
+  | "locked"
+  | "finalized"
+  | "open_de";
 
 export const CATEGORY_LABEL: Record<Category, string> = {
   MAG: "男子",
@@ -11,6 +16,7 @@ export const STATUS_LABEL: Record<CompetitionStatus, string> = {
   open: "D入力受付中",
   locked: "D入力締切",
   finalized: "確定",
+  open_de: "D・E入力受付中",
 };
 
 export const STATUS_ORDER: CompetitionStatus[] = [
@@ -18,6 +24,20 @@ export const STATUS_ORDER: CompetitionStatus[] = [
   "open",
   "locked",
   "finalized",
+  "open_de",
+];
+
+/** 選手が自分の D / ND を入力できるステータス */
+export const ATHLETE_D_STATUSES: CompetitionStatus[] = ["open", "open_de"];
+
+/** 選手が自分の E / SB まで入力できるステータス */
+export const ATHLETE_E_STATUSES: CompetitionStatus[] = ["open_de"];
+
+/** 管理者が採点入力できるステータス */
+export const ADMIN_SCORING_STATUSES: CompetitionStatus[] = [
+  "open",
+  "locked",
+  "open_de",
 ];
 
 /** 選手の所属・学年の選択肢 */

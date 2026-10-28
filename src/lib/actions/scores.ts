@@ -7,6 +7,7 @@ import { getCompetition } from "@/lib/db/queries";
 import {
   assertCanEditD,
   assertCanEditE,
+  athleteCanEditE,
   GuardError,
   type Actor,
 } from "@/lib/auth/guards";
@@ -45,7 +46,10 @@ async function resolveActor(): Promise<{ actor: Actor; athleteId: string | null 
   throw new GuardError("ログインが必要です。");
 }
 
-/** 選手 (または管理者代理) の D スコア + ND 一括保存。 */
+/**
+ * 選手 (または管理者代理) の一括保存。
+ * D / ND は常に、E / SB はステータスが open_de のとき (または管理者) のみ保存する。
+ */
 export async function saveDScores(
   _prev: ActionResult,
   formData: FormData,
@@ -60,6 +64,14 @@ export async function saveDScores(
 
     const apparatusIds = formData.getAll("apparatus_id").map(String);
     const now = new Date().toISOString();
+    // E / SB を保存してよいか (選手は open_de のときだけ、管理者は常に)
+    const canEditE =
+      actor.kind === "admin" || athleteCanEditE(comp);
+    const sentE = apparatusIds.some((apId) => formData.has(`e_${apId}`));
+    if (sentE && !canEditE) {
+      return fail("この試技会は E スコアの入力を受け付けていません。");
+    }
+
     let saved = 0;
     for (const apId of apparatusIds) {
       const value = parseScore(formData.get(`d_${apId}`), "D スコア", 1);
@@ -67,6 +79,15 @@ export async function saveDScores(
       // ND は選手も入力できる (フォームに nd_<id> があるときのみ更新)
       if (formData.has(`nd_${apId}`)) {
         patch.nd = parseScore(formData.get(`nd_${apId}`), "ND", 1) ?? "0.000";
+      }
+      // E / SB (open_de のときだけフォームに出る)
+      if (canEditE && formData.has(`e_${apId}`)) {
+        patch.e_score = parseScore(formData.get(`e_${apId}`), "E スコア", 3);
+        patch.e_updated_at = now;
+      }
+      if (canEditE && formData.has(`sb_marker_${apId}`)) {
+        patch.sb =
+          String(formData.get(`sb_${apId}`)) === "on" ? "0.100" : "0.000";
       }
       const { error } = await db()
         .from("routines")

@@ -9,7 +9,7 @@ import {
 } from "@/lib/db/queries";
 import { ApparatusScoreForm } from "@/components/apparatus-score-form";
 import { Card, CardBody, Badge } from "@/components/ui";
-import { CATEGORY_LABEL, STATUS_LABEL } from "@/lib/types";
+import { ADMIN_SCORING_STATUSES, CATEGORY_LABEL, STATUS_LABEL } from "@/lib/types";
 
 export default async function AdminApparatusScorePage({
   params,
@@ -35,7 +35,7 @@ export default async function AdminApparatusScorePage({
   const prevAp = idx > 0 ? sameCat[idx - 1] : null;
   const nextAp = idx >= 0 && idx < sameCat.length - 1 ? sameCat[idx + 1] : null;
 
-  const canEdit = comp.status === "open" || comp.status === "locked";
+  const canEdit = ADMIN_SCORING_STATUSES.includes(comp.status);
 
   return (
     <div className="space-y-4">

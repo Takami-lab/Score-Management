@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAthlete } from "@/lib/auth/athlete";
 import { getCompetition, listAthleteRoutineRows } from "@/lib/db/queries";
 import { DInputForm } from "@/components/d-input-form";
+import { ATHLETE_D_STATUSES, ATHLETE_E_STATUSES } from "@/lib/types";
 
 export default async function AthleteDInputPage({
   params,
@@ -20,7 +21,8 @@ export default async function AthleteDInputPage({
       competitionId={id}
       athleteId={athlete.id}
       routineRows={rows}
-      editable={comp.status === "open"}
+      editable={ATHLETE_D_STATUSES.includes(comp.status)}
+      editableE={ATHLETE_E_STATUSES.includes(comp.status)}
     />
   );
 }

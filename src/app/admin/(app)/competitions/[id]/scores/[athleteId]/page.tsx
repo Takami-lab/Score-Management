@@ -8,7 +8,7 @@ import {
 } from "@/lib/db/queries";
 import { RoutineScoreForm } from "@/components/routine-score-form";
 import { Card, CardBody, Badge } from "@/components/ui";
-import { athleteLabel, STATUS_LABEL } from "@/lib/types";
+import { ADMIN_SCORING_STATUSES, athleteLabel, STATUS_LABEL } from "@/lib/types";
 
 export default async function AdminScorePage({
   params,
@@ -29,7 +29,7 @@ export default async function AdminScorePage({
   const nextAthleteId = idx >= 0 && idx < sameCat.length - 1 ? sameCat[idx + 1].id : null;
   const prevAthleteId = idx > 0 ? sameCat[idx - 1].id : null;
 
-  const canEdit = comp.status === "open" || comp.status === "locked";
+  const canEdit = ADMIN_SCORING_STATUSES.includes(comp.status);
 
   return (
     <div className="space-y-4">
